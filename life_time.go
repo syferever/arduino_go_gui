@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"image/color"
 	"log"
 
 	// "math"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,14 +36,27 @@ func (p *MyPort) send_str(s string) {
 }
 
 func (p *MyPort) read_str() string {
-	buf := make([]byte, 128)
-	bytes_read, err := p.p.Read(buf)
+	buf := bufio.NewReader(p.p)
+	line, err := buf.ReadString('\n')
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := string(buf[:bytes_read])
-	log.Println("Received from serial:", s)
-	return s
+	log.Println("Received from serial:", line)
+	return line
+}
+
+func (p *MyPort) read_float64() float64 {
+	buf := bufio.NewReader(p.p)
+	line, err := buf.ReadString('\r')
+	if err != nil {
+		log.Println(err)
+	}
+	line = line[1 : len(line)-1]
+	value, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		log.Println("Error parsing float:", err)
+	}
+	return value
 }
 
 func (p *MyPort) read(buf_size int) []byte {
@@ -104,22 +118,25 @@ func (p *MyPort) measure(num int) {
 	time.Sleep(time.Duration(num) * time.Second)
 	p.send_str("d0")
 	for i := 0; i < 100; i++ {
-		buf := p.read(2)
-		res[0][i] = float64(int(buf[0])*256 + int(buf[1]))
-		fmt.Println(res)
+		// buf := p.read(128)
+		// res[0][i] = float64(int(buf[0])*256 + int(buf[1]))
+		res[0][i] = p.read_float64()
+		// fmt.Println(res)
 	}
 	p.send_str("d1")
 	for i := 0; i < 100; i++ {
-		buf := p.read(2)
-		res[1][i] = float64(int(buf[0])*256 + int(buf[1]))
+		// buf := p.read(128)
+		// res[1][i] = float64(int(buf[0])*256 + int(buf[1]))
+		res[1][i] = p.read_float64()
 	}
 	p.send_str("d2")
 	for i := 0; i < 100; i++ {
-		buf := p.read(2)
-		res[2][i] = float64(int(buf[0])*256 + int(buf[1]))
+		// buf := p.read(128)
+		// res[2][i] = float64(int(buf[0])*256 + int(buf[1]))
+		res[2][i] = p.read_float64()
 	}
 	p.send_str("t")
-	buf := p.read(2)
+	buf := p.read(128)
 	t := (int(buf[0])*256 + int(buf[1])) / 1000
 	x := linspace(0, float64(t), 100)
 	plt("Time of Life measurement", "t", "sigma", x, res[2][:])
@@ -169,7 +186,7 @@ func main() {
 			if text[0] == 'm' {
 				p.measure(int(text[1]))
 			}
-			// p.read_str()
+			p.read_str()
 			text = text[:0]
 		}
 		rl.BeginDrawing()
