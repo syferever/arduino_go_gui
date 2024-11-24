@@ -1,16 +1,18 @@
 String inputString = "";
 bool stringComplete = false;
 int LED = 2;
-int d = 1000;
+int d = 10;
 long int t = 0;
 const int points = 100;
-int V[3][points];
+const char output = A5;
+int V[points];
+float sigma0;
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(LED, OUTPUT);
-  inputString.reserve(200);
+  inputString.reserve(10);
 }
 
 void loop() {
@@ -27,30 +29,29 @@ void loop() {
         d = argument;
         break;
       case 'm':
-        t = micros();
-        V[3][points] = memset(V, 0, sizeof(V));
+        memset(V, 0, sizeof(V));
+        sigma0 = 1.0 / (1023.0 / analogRead(A5) - 1);
         for (int j = 0; j < argument; j++) {
-          digitalWrite(LED, LOW);
-          for (int i = 0; i < points; i++) {
-            V[0][i] += analogRead(A7);
-            delayMicroseconds(d);
-          }
           digitalWrite(LED, HIGH);
-          for (int i = 0; i < points; i++) {
-            V[1][i] += analogRead(A7);
-            delayMicroseconds(d);
-          }
+          delay(1000);
           digitalWrite(LED, LOW);
+          t = micros();
           for (int i = 0; i < points; i++) {
-            V[2][i] += analogRead(A7);
+            V[i] += analogRead(A5)/float(argument);
             delayMicroseconds(d);
           }
+          t = micros() - t;
         }
-        t = (micros() - t)/1000;
         break;
       case 'd':
         for (int i = 0; i < points; i++) {
-          Serial.println(V[argument][i]);
+          float sigma = 1.0 / (1023.0 / V[i] - 1.0) - sigma0;
+          if (i > 0) {
+            float tau = sigma * (t / points) / ((1.0 / (1023.0 / V[i - 1] - 1.0) - sigma0) - sigma);
+            Serial.print(tau/1000);
+            Serial.print(",");
+            Serial.println(sigma);
+          }
         }
         break;
       case 't':
