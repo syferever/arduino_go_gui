@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"image/color"
 	"log"
 
@@ -10,8 +11,9 @@ import (
 	"strings"
 	"time"
 
+	rg "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/tarm/serial"
+	"go.bug.st/serial"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
@@ -23,7 +25,7 @@ const (
 )
 
 type MyPort struct {
-	p *serial.Port
+	p serial.Port
 }
 
 func (p *MyPort) send_str(s string) {
@@ -143,21 +145,36 @@ func (p *MyPort) measure(num int) {
 }
 
 func main() {
-	c := &serial.Config{
-		Name: "COM11",
-		Baud: 9600,
-	}
-	c.ReadTimeout = time.Millisecond * 100
-	s, err := serial.OpenPort(c)
-	p := MyPort{s}
-	time.Sleep(time.Second)
+	ports, err := serial.GetPortsList()
 	if err != nil {
 		log.Fatal(err)
 	}
+	var drop_fill string
+	fmt.Println("Found ports:")
+	for _, port := range ports {
+		fmt.Println(port)
+	}
+	drop_fill = strings.Join(ports, ";")
+	switch {
+	case len(ports) == 0:
+		log.Panicln("No serial ports found.")
+	case err != nil:
+		log.Fatal(err)
+	}
+	var my_port string
+	var drop_active int32
+	var p MyPort
+	m := &serial.Mode{
+		BaudRate: 9600,
+	}
 
 	rl.InitWindow(screenWidth, screenHeight, "Life time measurement")
-	textBox := rl.NewRectangle(100, 100, 300, 60)
+	textBox := rl.NewRectangle(100, 300, 300, 60)
 	textBoxActive := false
+	drop_mode := false
+	ser_btn_clck := false
+	ser_btn_box := rl.NewRectangle(450, 40, 60, 60)
+	ser_select := rl.NewRectangle(100, 40, 300, 60)
 	var text []rune
 	for !rl.WindowShouldClose() {
 		if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
@@ -181,6 +198,23 @@ func main() {
 			}
 		}
 
+		if rg.DropdownBox(ser_select, drop_fill, &drop_active, drop_mode) {
+			drop_mode = !drop_mode
+		}
+
+		if ser_btn_clck {
+			my_port = ports[drop_active]
+			// _, err = fmt.Scan(&my_port)
+			s, err := serial.Open(my_port, m)
+			p = MyPort{s}
+			time.Sleep(time.Second)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("Port set to %s successfully\n", my_port)
+			ser_btn_clck = !ser_btn_clck
+		}
+
 		if rl.IsKeyPressed(rl.KeyEnter) {
 			p.send_str(string(text))
 			if text[0] == 'm' {
@@ -192,8 +226,10 @@ func main() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)
 		rl.DrawRectangleLinesEx(textBox, 2, rl.Black)
-		rl.DrawText("Put your command hear:", 30, 50, 26, rl.Black)
-		rl.DrawText(string(text), 110, 120, 26, rl.Magenta)
+		rl.DrawText("Put your command hear:", 50, 250, 26, rl.Black)
+		rl.DrawText(string(text), 110, 320, 26, rl.Magenta)
+		ser_btn_clck = rg.Button(ser_btn_box, "Set")
+		// log.Println(ser_btn_clck)
 		rl.EndDrawing()
 
 		// rl.CloseWindow()
