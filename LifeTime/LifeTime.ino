@@ -48,9 +48,10 @@ void loop() {
           float sigma = 1.0 / (1023.0 / V[i] - 1.0) - sigma0;
           if (i > 0) {
             float tau = sigma * (t / points) / ((1.0 / (1023.0 / V[i - 1] - 1.0) - sigma0) - sigma);
-            Serial.print(tau/1000);
-            Serial.print(",");
-            Serial.println(sigma);
+            // Serial.print(tau/1000);
+            // Serial.print(",");
+            Serial.print(String(tau/1000) + '\n');
+            // Serial.println(sigma);
           }
         }
         break;

@@ -49,15 +49,16 @@ func (p *MyPort) read_str() string {
 
 func (p *MyPort) read_float64() float64 {
 	buf := bufio.NewReader(p.p)
-	line, err := buf.ReadString('\r')
+	line, err := buf.ReadString('\n')
 	if err != nil {
 		log.Println(err)
 	}
-	line = line[1 : len(line)-1]
+	line = line[:len(line)-1]
 	value, err := strconv.ParseFloat(line, 64)
 	if err != nil {
 		log.Println("Error parsing float:", err)
 	}
+	log.Println("Received from serial:", value)
 	return value
 }
 
@@ -117,31 +118,31 @@ func (p *MyPort) measure(num int) {
 	for j := range res {
 		res[j] = make([]float64, 100)
 	}
-	time.Sleep(time.Duration(num) * time.Second)
-	p.send_str("d0")
+	time.Sleep((time.Duration(num) + 1) * time.Second)
+	p.send_str("d")
 	for i := 0; i < 100; i++ {
-		// buf := p.read(128)
-		// res[0][i] = float64(int(buf[0])*256 + int(buf[1]))
-		res[0][i] = p.read_float64()
+		a := p.read_float64()
+		log.Println("Recieved from serial:", a)
+		// res[0][i] = p.read_float64()
 		// fmt.Println(res)
 	}
-	p.send_str("d1")
-	for i := 0; i < 100; i++ {
-		// buf := p.read(128)
-		// res[1][i] = float64(int(buf[0])*256 + int(buf[1]))
-		res[1][i] = p.read_float64()
-	}
-	p.send_str("d2")
-	for i := 0; i < 100; i++ {
-		// buf := p.read(128)
-		// res[2][i] = float64(int(buf[0])*256 + int(buf[1]))
-		res[2][i] = p.read_float64()
-	}
-	p.send_str("t")
-	buf := p.read(128)
-	t := (int(buf[0])*256 + int(buf[1])) / 1000
-	x := linspace(0, float64(t), 100)
-	plt("Time of Life measurement", "t", "sigma", x, res[2][:])
+	// p.send_str("d1")
+	// for i := 0; i < 100; i++ {
+	// buf := p.read(128)
+	// res[1][i] = float64(int(buf[0])*256 + int(buf[1]))
+	// 	res[1][i] = p.read_float64()
+	// }
+	// p.send_str("d2")
+	// for i := 0; i < 100; i++ {
+	// buf := p.read(128)
+	// res[2][i] = float64(int(buf[0])*256 + int(buf[1]))
+	// 	res[2][i] = p.read_float64()
+	// }
+	// p.send_str("t")
+	// buf := p.read(128)
+	// t := (int(buf[0])*256 + int(buf[1])) / 1000
+	// x := linspace(0, float64(res[0][99]), 100)
+	// plt("Time of Life measurement", "t", "sigma", x, res[0][:])
 }
 
 func main() {
@@ -165,7 +166,7 @@ func main() {
 	var drop_active int32
 	var p MyPort
 	m := &serial.Mode{
-		BaudRate: 9600,
+		BaudRate: 115200,
 	}
 
 	rl.InitWindow(screenWidth, screenHeight, "Life time measurement")
@@ -229,7 +230,6 @@ func main() {
 		rl.DrawText("Put your command hear:", 50, 250, 26, rl.Black)
 		rl.DrawText(string(text), 110, 320, 26, rl.Magenta)
 		ser_btn_clck = rg.Button(ser_btn_box, "Set")
-		// log.Println(ser_btn_clck)
 		rl.EndDrawing()
 
 		// rl.CloseWindow()
