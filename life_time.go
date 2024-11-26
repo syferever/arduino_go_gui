@@ -113,12 +113,17 @@ func plt(title, x_ax, y_ax string, x, y []float64) {
 }
 
 func (p *MyPort) measure(num int) {
-	p.send_str(string('m' + rune(num)))
+	command := string("m" + string(num))
+	log.Println(command)
+	p.send_str(command)
 	res := make([][]float64, 3)
 	for j := range res {
 		res[j] = make([]float64, 100)
 	}
-	time.Sleep((time.Duration(num) + 1) * time.Second)
+	delay := time.Duration(num + 1)
+	log.Println(delay)
+	time.Sleep(delay)
+	log.Println("Delay finished")
 	p.send_str("d")
 	for i := 0; i < 100; i++ {
 		a := p.read_float64()
@@ -166,7 +171,7 @@ func main() {
 	var drop_active int32
 	var p MyPort
 	m := &serial.Mode{
-		BaudRate: 115200,
+		BaudRate: 9600,
 	}
 
 	rl.InitWindow(screenWidth, screenHeight, "Life time measurement")
@@ -217,9 +222,10 @@ func main() {
 		}
 
 		if rl.IsKeyPressed(rl.KeyEnter) {
-			p.send_str(string(text))
 			if text[0] == 'm' {
 				p.measure(int(text[1]))
+			} else {
+				p.send_str(string(text))
 			}
 			p.read_str()
 			text = text[:0]

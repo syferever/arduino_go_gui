@@ -20,10 +20,10 @@ void loop() {
         break;
       case 'm':
         digitalWrite(LED_BUILTIN, 1);
-        delay(argument);
+        delay(argument*1000);
         digitalWrite(LED_BUILTIN, 0);
       case 'd':
-        for (int i = 1; i < 100; i++) {
+        for (int i = 1; i <= 100; i++) {
           Serial.print(String(i) + '\n');
         }
     }

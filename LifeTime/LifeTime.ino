@@ -1,6 +1,6 @@
 String inputString = "";
 bool stringComplete = false;
-int LED = 2;
+int LED = LED_BUILTIN;
 int d = 10;
 long int t = 0;
 const int points = 100;

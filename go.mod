@@ -1,4 +1,4 @@
-module C/Users/Kirill/Desktop/OLD_STUDY/5grade/Photoelctronics/lab7/go_ver
+module github.com/syferever/arduino_go_gui
 
 go 1.23.0
 
