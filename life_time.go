@@ -43,34 +43,34 @@ func (p *MyPort) read_str() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Received from serial:", line)
+	// log.Println("Received from serial:", line)
 	return line
 }
 
 func (p *MyPort) read_float64() float64 {
-	buf := bufio.NewReader(p.p)
-	line, err := buf.ReadString('\n')
-	if err != nil {
-		log.Println(err)
-	}
+	// buf := bufio.NewReader(p.p)
+	// line, err := buf.ReadString('\n')
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+	line := p.read_str()
 	line = line[:len(line)-1]
 	value, err := strconv.ParseFloat(line, 64)
 	if err != nil {
 		log.Println("Error parsing float:", err)
 	}
-	log.Println("Received from serial:", value)
 	return value
 }
 
-func (p *MyPort) read(buf_size int) []byte {
-	buf := make([]byte, buf_size)
-	bytes_read, err := p.p.Read(buf)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Received from serial:", buf[:bytes_read])
-	return buf[:bytes_read]
-}
+// func (p *MyPort) read(buf_size int) []byte {
+// 	buf := make([]byte, buf_size)
+// 	bytes_read, err := p.p.Read(buf)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	log.Println("Received from serial:", buf[:bytes_read])
+// 	return buf[:bytes_read]
+// }
 
 func linspace(start, end float64, n int) []float64 {
 	if n <= 0 {
@@ -113,23 +113,18 @@ func plt(title, x_ax, y_ax string, x, y []float64) {
 }
 
 func (p *MyPort) measure(num int) {
-	command := string("m" + string(num))
-	log.Println(command)
-	p.send_str(command)
-	res := make([][]float64, 3)
-	for j := range res {
-		res[j] = make([]float64, 100)
-	}
-	delay := time.Duration(num + 1)
-	log.Println(delay)
-	time.Sleep(delay)
-	log.Println("Delay finished")
+	p.send_str(string("m" + strconv.Itoa(num)))
+	res := make([]float64, 10)
+	// for j := range res {
+	// 	res[j] = make([]float64, 100)
+	// }
+	time.Sleep(time.Duration(num+1) * time.Second)
 	p.send_str("d")
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		a := p.read_float64()
 		log.Println("Recieved from serial:", a)
-		// res[0][i] = p.read_float64()
-		// fmt.Println(res)
+		res[i] = a
+		time.Sleep(5 * time.Millisecond)
 	}
 	// p.send_str("d1")
 	// for i := 0; i < 100; i++ {
@@ -146,8 +141,8 @@ func (p *MyPort) measure(num int) {
 	// p.send_str("t")
 	// buf := p.read(128)
 	// t := (int(buf[0])*256 + int(buf[1])) / 1000
-	// x := linspace(0, float64(res[0][99]), 100)
-	// plt("Time of Life measurement", "t", "sigma", x, res[0][:])
+	x := linspace(0, float64(res[len(res)-1]), len(res))
+	plt("Time of Life measurement", "t", "sigma", x, res[:])
 }
 
 func main() {
@@ -217,13 +212,15 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			p.p.SetReadTimeout(5 * time.Second)
 			log.Printf("Port set to %s successfully\n", my_port)
 			ser_btn_clck = !ser_btn_clck
 		}
 
 		if rl.IsKeyPressed(rl.KeyEnter) {
 			if text[0] == 'm' {
-				p.measure(int(text[1]))
+				num, _ := strconv.Atoi(string(text[1:]))
+				p.measure(num)
 			} else {
 				p.send_str(string(text))
 			}

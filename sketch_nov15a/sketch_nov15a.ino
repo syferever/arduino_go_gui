@@ -1,5 +1,6 @@
 bool stringComplete = false;
 String inputString = "";
+int LED = 2;
 
 void setup() {
   // put your setup code here, to run once:
@@ -15,16 +16,17 @@ void loop() {
     // Serial.println(argument);
     switch (command) {
       case 'l':
-        digitalWrite(LED_BUILTIN, argument);
+        digitalWrite(LED, argument);
         Serial.println(argument ? "Light on" : "Light off");
         break;
       case 'm':
-        digitalWrite(LED_BUILTIN, 1);
+        digitalWrite(LED, 1);
         delay(argument*1000);
-        digitalWrite(LED_BUILTIN, 0);
+        digitalWrite(LED, 0);
       case 'd':
-        for (int i = 1; i <= 100; i++) {
+        for (int i = 1; i <= 10; i++) {
           Serial.print(String(i) + '\n');
+          delay(10);
         }
     }
     inputString = "";
