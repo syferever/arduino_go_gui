@@ -1,10 +1,9 @@
 bool stringComplete = false;
-int LED = 2;
 String inputString = "";
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(LED, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(9600);
 }
 
@@ -13,24 +12,24 @@ void loop() {
   if (stringComplete) {
     char command = inputString.charAt(0);
     int argument = inputString.substring(1).toInt();
-    Serial.println(argument);
+    // Serial.println(argument);
     switch (command) {
       case 'l':
-        digitalWrite(LED, argument);
+        digitalWrite(LED_BUILTIN, argument);
         Serial.println(argument ? "Light on" : "Light off");
         break;
       case 'm':
-        digitalWrite(LED, 1);
+        digitalWrite(LED_BUILTIN, 1);
         delay(argument);
-        digitalWrite(LED, 0);
+        digitalWrite(LED_BUILTIN, 0);
       case 'd':
         for (int i = 1; i < 100; i++) {
           Serial.print(String(i) + '\n');
         }
     }
-  }
-  inputString = "";
-  stringComplete = false;
+    inputString = "";
+   stringComplete = false;
+  } 
 }
 
 void serialEvent() {

@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849
-	github.com/gen2brain/raylib-go/raylib v0.0.0-20241028081101-8a6b23b2ed76
+	github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849
 	go.bug.st/serial v1.6.2
 	gonum.org/v1/plot v0.15.0
 )
@@ -20,8 +20,8 @@ require (
 	github.com/go-pdf/fpdf v0.9.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
+	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
 	golang.org/x/image v0.21.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 )
