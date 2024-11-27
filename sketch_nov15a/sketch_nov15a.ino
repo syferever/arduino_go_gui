@@ -1,6 +1,6 @@
 bool stringComplete = false;
 String inputString = "";
-int LED = LED_BUILTIN;
+int LED = 2;
 
 void SerialPrint(String s) {
   Serial.print(s + "\n");

@@ -21,7 +21,7 @@ import (
 
 const (
 	screenWidth  = 800
-	screenHeight = 450
+	screenHeight = 800
 )
 
 type MyPort struct {
@@ -99,7 +99,7 @@ func linspace(start, end float64, n int) []float64 {
 	return values
 }
 
-func plt(title, x_ax, y_ax string, x, y []float64) {
+func plt(title, x_ax, y_ax string, x, y []float64) string {
 	p := plot.New()
 	p.Title.Text = title
 	p.X.Label.Text = x_ax
@@ -118,12 +118,14 @@ func plt(title, x_ax, y_ax string, x, y []float64) {
 	p.Add(graph)
 	graph.Color = color.RGBA64{0, 255, 0, 0}
 
-	if err := p.Save(6*vg.Inch, 6*vg.Inch, "measured.png"); err != nil {
+	filename := "measured.png"
+	if err := p.Save(vg.Points(400), vg.Points(400), filename); err != nil {
 		panic(err)
 	}
+	return filename
 }
 
-func (p *MyPort) measure(num int) {
+func (p *MyPort) measure(num int) string {
 	p.send_str(string("m" + strconv.Itoa(num)))
 	res := make([]float64, 10)
 	// for j := range res {
@@ -151,7 +153,8 @@ func (p *MyPort) measure(num int) {
 	// buf := p.read(128)
 	// t := (int(buf[0])*256 + int(buf[1])) / 1000
 	x := linspace(0, float64(res[len(res)-1]), len(res))
-	plt("Time of Life measurement", "t", "sigma", x, res[:])
+	graph_res := plt("Time of Life measurement", "t", "sigma", x, res[:])
+	return graph_res
 }
 
 func main() {
@@ -162,12 +165,10 @@ func main() {
 	if len(ports) == 0 {
 		ports = append(ports, "No serial ports found.")
 	}
-	var drop_fill string
 	fmt.Println("Found ports:")
 	for _, port := range ports {
 		log.Println(port)
 	}
-	drop_fill = strings.Join(ports, ";")
 	switch {
 	case len(ports) == 0:
 		log.Panic("No serial ports found.")
@@ -175,19 +176,28 @@ func main() {
 		log.Fatal(err)
 	}
 	var my_port string
-	var drop_active int32
+	rates := []string{"9600", "115200"}
 	var p MyPort
-	m := &serial.Mode{
-		BaudRate: 115200,
-	}
 
 	rl.InitWindow(screenWidth, screenHeight, "Life time measurement")
-	textBox := rl.NewRectangle(100, 300, 300, 60)
+
+	textBox := rl.NewRectangle(50, 600, 300, 60)
 	textBoxActive := false
-	drop_mode := false
+	ser_select := rl.NewRectangle(370, 600, 180, 60)
+	var ser_drop_active int32
+	var ser_drop_fill string
+	ser_drop_fill = strings.Join(ports, ";")
+	ser_drop_mode := false
+	rate_select := rl.NewRectangle(570, 600, 100, 60)
+	var rate_drop_active int32
+	rate_drop_fill := strings.Join(rates, ";")
+	rate_drop_mode := false
+	ser_btn_box := rl.NewRectangle(690, 600, 60, 60)
 	ser_btn_clck := false
-	ser_btn_box := rl.NewRectangle(450, 40, 60, 60)
-	ser_select := rl.NewRectangle(100, 40, 300, 60)
+
+	cur_graph := rl.LoadTexture("./logo.jpg")
+	graph_pos := rl.NewVector2(150, 20)
+
 	var text []rune
 	for !rl.WindowShouldClose() {
 		if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
@@ -211,13 +221,23 @@ func main() {
 			}
 		}
 
-		if rg.DropdownBox(ser_select, drop_fill, &drop_active, drop_mode) {
-			drop_mode = !drop_mode
+		if rg.DropdownBox(ser_select, ser_drop_fill, &ser_drop_active, ser_drop_mode) {
+			ser_drop_mode = !ser_drop_mode
+		}
+
+		if rg.DropdownBox(rate_select, rate_drop_fill, &rate_drop_active, rate_drop_mode) {
+			rate_drop_mode = !rate_drop_mode
 		}
 
 		if ser_btn_clck {
-			my_port = ports[drop_active]
-			// _, err = fmt.Scan(&my_port)
+			my_port = ports[ser_drop_active]
+			baudrate, err := strconv.Atoi(rates[rate_drop_active])
+			if err != nil {
+				log.Fatal(err)
+			}
+			m := &serial.Mode{
+				BaudRate: baudrate,
+			}
 			s, err := serial.Open(my_port, m)
 			p = NewMyPort(s)
 			if err != nil {
@@ -232,7 +252,10 @@ func main() {
 			switch text[0] {
 			case 'm':
 				num, _ := strconv.Atoi(string(text[1:]))
-				p.measure(num)
+				graph_file := p.measure(num)
+				text = text[:0]
+				rl.UnloadTexture(cur_graph)
+				cur_graph = rl.LoadTexture(graph_file)
 				break
 			default:
 				p.send_str(string(text))
@@ -240,12 +263,14 @@ func main() {
 				text = text[:0]
 			}
 		}
+
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)
 		rl.DrawRectangleLinesEx(textBox, 2, rl.Black)
-		rl.DrawText("Put your command hear:", 50, 250, 26, rl.Black)
-		rl.DrawText(string(text), 110, 320, 26, rl.Magenta)
+		rl.DrawText("Put your command hear:", 50, 580, 16, rl.Black)
+		rl.DrawText(string(text), 70, 620, 26, rl.Magenta)
 		ser_btn_clck = rg.Button(ser_btn_box, "Set")
+		rl.DrawTextureEx(cur_graph, graph_pos, 0, 1, rl.White)
 		rl.EndDrawing()
 
 		// rl.CloseWindow()

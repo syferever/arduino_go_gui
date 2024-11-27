@@ -6,6 +6,7 @@ require (
 	github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849
 	go.bug.st/serial v1.6.2
+	gonum.org/v1/gonum v0.15.1
 	gonum.org/v1/plot v0.15.0
 )
 
