@@ -26,12 +26,12 @@ const (
 
 type MyPort struct {
 	p serial.Port
-	b bufio.Reader
+	b bufio.Scanner
 }
 
 func NewMyPort(p serial.Port) MyPort {
 	return MyPort{
-		p, *bufio.NewReader(p),
+		p, *bufio.NewScanner(p),
 	}
 }
 
@@ -45,10 +45,17 @@ func (p *MyPort) send_str(s string) {
 }
 
 func (p *MyPort) read_str() string {
-	line, err := p.b.ReadString('\n')
-	if err != nil {
-		log.Fatalln(err)
+	for {
+		if p.b.Scan() {
+			break
+		}
+		err := p.b.Err()
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
+	line := p.b.Text()
+	log.Println("read:", line)
 	return line
 }
 
@@ -59,7 +66,6 @@ func (p *MyPort) read_float64() float64 {
 	// 	log.Println(err)
 	// }
 	line := p.read_str()
-	line = line[:len(line)-1]
 	value, err := strconv.ParseFloat(line, 64)
 	if err != nil {
 		log.Println("Error parsing float:", err)
@@ -123,13 +129,11 @@ func (p *MyPort) measure(num int) {
 	// for j := range res {
 	// 	res[j] = make([]float64, 100)
 	// }
-	time.Sleep(time.Duration(num+1) * time.Second)
 	p.send_str("d")
 	for i := 0; i < 10; i++ {
 		a := p.read_float64()
 		log.Println("Recieved from serial:", a)
 		res[i] = a
-		time.Sleep(5 * time.Millisecond)
 	}
 	// p.send_str("d1")
 	// for i := 0; i < 100; i++ {
@@ -213,7 +217,6 @@ func main() {
 			// _, err = fmt.Scan(&my_port)
 			s, err := serial.Open(my_port, m)
 			p = NewMyPort(s)
-			time.Sleep(time.Second)
 			if err != nil {
 				log.Fatal(err)
 			}
