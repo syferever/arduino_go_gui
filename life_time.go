@@ -26,6 +26,13 @@ const (
 
 type MyPort struct {
 	p serial.Port
+	b bufio.Reader
+}
+
+func NewMyPort(p serial.Port) MyPort {
+	return MyPort{
+		p, *bufio.NewReader(p),
+	}
 }
 
 func (p *MyPort) send_str(s string) {
@@ -38,12 +45,10 @@ func (p *MyPort) send_str(s string) {
 }
 
 func (p *MyPort) read_str() string {
-	buf := bufio.NewReader(p.p)
-	line, err := buf.ReadString('\n')
+	line, err := p.b.ReadString('\n')
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
-	// log.Println("Received from serial:", line)
 	return line
 }
 
@@ -166,7 +171,7 @@ func main() {
 	var drop_active int32
 	var p MyPort
 	m := &serial.Mode{
-		BaudRate: 9600,
+		BaudRate: 115200,
 	}
 
 	rl.InitWindow(screenWidth, screenHeight, "Life time measurement")
@@ -207,7 +212,7 @@ func main() {
 			my_port = ports[drop_active]
 			// _, err = fmt.Scan(&my_port)
 			s, err := serial.Open(my_port, m)
-			p = MyPort{s}
+			p = NewMyPort(s)
 			time.Sleep(time.Second)
 			if err != nil {
 				log.Fatal(err)
@@ -218,14 +223,16 @@ func main() {
 		}
 
 		if rl.IsKeyPressed(rl.KeyEnter) {
-			if text[0] == 'm' {
+			switch text[0] {
+			case 'm':
 				num, _ := strconv.Atoi(string(text[1:]))
 				p.measure(num)
-			} else {
+				break
+			default:
 				p.send_str(string(text))
+				p.read_str()
+				text = text[:0]
 			}
-			p.read_str()
-			text = text[:0]
 		}
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)
