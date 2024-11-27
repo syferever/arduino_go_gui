@@ -159,15 +159,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(ports) == 0 {
+		ports = append(ports, "No serial ports found.")
+	}
 	var drop_fill string
 	fmt.Println("Found ports:")
 	for _, port := range ports {
-		fmt.Println(port)
+		log.Println(port)
 	}
 	drop_fill = strings.Join(ports, ";")
 	switch {
 	case len(ports) == 0:
-		log.Panicln("No serial ports found.")
+		log.Panic("No serial ports found.")
 	case err != nil:
 		log.Fatal(err)
 	}
