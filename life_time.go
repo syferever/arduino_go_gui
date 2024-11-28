@@ -127,12 +127,12 @@ func plt(title, x_ax, y_ax string, x, y []float64) string {
 
 func (p *MyPort) measure(num int) string {
 	p.send_str(string("m" + strconv.Itoa(num)))
-	res := make([]float64, 10)
+	res := make([]float64, 100)
 	// for j := range res {
 	// 	res[j] = make([]float64, 100)
 	// }
 	p.send_str("d")
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		a := p.read_float64()
 		log.Println("Recieved from serial:", a)
 		res[i] = a

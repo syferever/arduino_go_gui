@@ -1,6 +1,6 @@
 bool stringComplete = false;
 String inputString = "";
-int LED = 2;
+int LED = LED_BUILTIN;
 
 void SerialPrint(String s) {
   Serial.print(s + "\n");
@@ -8,7 +8,7 @@ void SerialPrint(String s) {
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED, OUTPUT);
   Serial.begin(115200);
 }
 
@@ -29,8 +29,8 @@ void loop() {
         digitalWrite(LED, 0);
         break;
       case 'd':
-        for (int i = 1; i <= 10; i++) {
-          SerialPrint(String(i));
+        for (int i = 1; i <= 100; i++) {
+          SerialPrint(String(pow(i, 2)));
         }
         break;
       default:
